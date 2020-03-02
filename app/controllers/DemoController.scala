@@ -1,11 +1,7 @@
 package controllers
 
 import javax.inject._
-import mapper.JsonWriter
-import models.{Category, CategoryDTO, Product, ProductDTO}
-import play.api.libs.json.Json
 import play.api.mvc._
-import scalikejdbc._
 
 /**
  * This controller creates an `Action` to handle HTTP requests to the
@@ -20,14 +16,8 @@ class DemoController @Inject()(cc: ControllerComponents) extends AbstractControl
    * will be called when the application receives a `GET` request with
    * a path of `/`.
    */
-  def getProducts = Action { implicit request =>
-    val products = Product.findAll()
-
-    Ok(Json.obj("products" -> products.map ( product =>
-      JsonWriter.productWrites.writes(ProductDTO(product.id, product.name, product.brand, product.price,
-        Some(CategoryDTO(Category.findBy(sqls"id = ${product.categoryId}"))),
-        product.createdAt, product.updatedAt, product.depotPrice))
-    )))
+  def get = Action { implicit request =>
+    Ok("Hello API")
   }
 
 }
