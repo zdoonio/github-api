@@ -3,4 +3,4 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET     /                   controllers.DemoController.get
+GET     /org/:orgName/contributors    controllers.ApiController.getNumberOfRepo(orgName: String)
