@@ -1,10 +1,10 @@
 package component
 
 import github4s.Github
-import cats.effect.{ConcurrentEffect, IO}
-import github4s.GithubResponses.GHResponse
-import github4s.domain.User
+import cats.effect.IO
 import model.ContributionsDTO
+import play.api.Configuration
+import utils.UtilsFunctions
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -38,14 +38,14 @@ object GithubComponent {
       result.map { user =>
         (user.login, user.contributions)
       }
-    }.groupBy(_._2).mapValues(_.map(_._1)).map{ case (x, y) => (y, x) }.map { data =>
-      ContributionsDTO(data._1.head, data._2)
+    }.groupBy(_._1).mapValues(_.map(_._2)).map { data =>
+      ContributionsDTO(data._1, UtilsFunctions.sumList(data._2))
     }.toList.sortWith(_.contributions.getOrElse(0) > _.contributions.getOrElse(0))
 
   }
 
   def getContributorsFromRepository(orgName: String, repoName: String) = {
-    Github[IO](accessToken).repos.listContributors(orgName, repoName, Some("true")).unsafeRunSync match {
+    Github[IO](accessToken).repos.listContributors(orgName, repoName, Some("false")).unsafeRunSync match {
       case Left(e) => {
         println(e.getMessage)
         List()
@@ -55,14 +55,14 @@ object GithubComponent {
     }
   }
 
-  def getAccessToken() = {
+  def getAccessToken(configuration: Configuration) = {
     val newAuth = Github[IO](None).auth.newAuth(
-      "",
-      "#",
+      configuration.underlying.getString("github.username"),
+      configuration.underlying.getString("github.password"),
       List("public_repo"),
       "New access token",
-      "",
-      "")
+      configuration.underlying.getString("github.client.id"),
+      configuration.underlying.getString("github.client.secret"))
     newAuth.unsafeRunSync match {
       case Left(e) =>
         println(s"Something went wrong: ${e.getMessage}")
