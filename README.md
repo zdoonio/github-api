@@ -6,7 +6,7 @@ many repositories and each repository has many contributors. To use this demo yo
 endpoint that given the name of the organization will return a list of contributors sorted by the
 number of contributions.
 
-* respond to a GET request at port 8080 and address /org/{org_name}/contributors
+* respond to a GET request at port 9000 and address /org/{org_name}/contributors
 * respond with JSON, which should be a list of contributors in the following format:
 { “name”: <contributor_login>, “contributions”: <no_of_contributions> }
 
