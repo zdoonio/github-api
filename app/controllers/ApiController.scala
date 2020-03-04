@@ -25,8 +25,8 @@ class ApiController @Inject()(cc: ControllerComponents) extends AbstractControll
 
   }
 
-  def getAccessToken = Action { implicit request =>
-    Ok("Welcome in API")
+  def getAccessToken = Action {
+    Ok(views.html.index())
   }
 
 }
