@@ -15,14 +15,18 @@ import mapper.JsonWriter
 @Singleton
 class ApiController @Inject()(cc: ControllerComponents) extends AbstractController(cc) {
 
-  def getNumberOfRepo(orgName: String) = Action { implicit request =>
+  def getNumberCommitsByUsersOfRepo(orgName: String) = Action { implicit request =>
 
     Ok(JsonWriter.responseWrites.writes(ResponseDTO[List[ContributionsDTO]] (
       Some("200"),
-      Some(GithubComponent.getMembers(orgName: String)),
+      Some(GithubComponent.getMembersAndCommits(orgName: String)),
       Some("Ok")))
     )
 
+  }
+
+  def getAccessToken = Action { implicit request =>
+    Ok("Welcome in API")
   }
 
 }

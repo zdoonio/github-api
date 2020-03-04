@@ -8,6 +8,7 @@ import model.ContributionsDTO
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.sys.process.Process
 
 /**
   * Created by Dominik Zduńczyk on 03.03.2020.
@@ -17,24 +18,62 @@ object GithubComponent {
   implicit val IOContextShift = IO.contextShift(global)
   val accessToken = sys.env.get("GH_TOKEN")
 
-  def getMembers(orgName: String) :List[ContributionsDTO] = {
+  def getMembersAndCommits(orgName: String): List[ContributionsDTO] = {
     val listOrgRepos = Github[IO](accessToken).repos.listOrgRepos(orgName)
 
-    listOrgRepos.unsafeRunSync match {
-      case Left(e) => println(s"Something went wrong: ${e.getMessage}")
+    val results = listOrgRepos.unsafeRunSync match {
+      case Left(e) => {
+        println(e.getMessage)
+        List()
+      }
 
       case Right(r) => {
-        r.result.foreach { repo =>
-          Github[IO](accessToken).repos.listContributors(orgName, repo.name, Some("true")).unsafeRunSync match {
-            case Left(e) => println(s"Something went wrong: ${e.getMessage}")
-            case Right(right) => println(right.result)
-          }
-
+        r.result.map { repo =>
+          getContributorsFromRepository(orgName, repo.name)
         }
-
       }
     }
-    List()
+
+    results.flatMap { result =>
+      result.map { user =>
+        (user.login, user.contributions)
+      }
+    }.groupBy(_._2).mapValues(_.map(_._1)).map{ case (x, y) => (y, x) }.map { data =>
+      ContributionsDTO(data._1.head, data._2)
+    }.toList.sortWith(_.contributions.getOrElse(0) > _.contributions.getOrElse(0))
+
+  }
+
+  def getContributorsFromRepository(orgName: String, repoName: String) = {
+    Github[IO](accessToken).repos.listContributors(orgName, repoName, Some("true")).unsafeRunSync match {
+      case Left(e) => {
+        println(e.getMessage)
+        List()
+      }
+
+      case Right(right) => right.result
+    }
+  }
+
+  def getAccessToken() = {
+    val newAuth = Github[IO](None).auth.newAuth(
+      "",
+      "#",
+      List("public_repo"),
+      "New access token",
+      "",
+      "")
+    newAuth.unsafeRunSync match {
+      case Left(e) =>
+        println(s"Something went wrong: ${e.getMessage}")
+
+      case Right(r) => {
+        Process("env",
+          None,
+          "GH_TOKEN" -> r.result.token)
+      }
+    }
+
   }
 
 }

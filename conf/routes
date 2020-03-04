@@ -3,4 +3,6 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET     /org/:orgName/contributors    controllers.ApiController.getNumberOfRepo(orgName: String)
+GET     /org/:orgName/contributors    controllers.ApiController.getNumberCommitsByUsersOfRepo(orgName: String)
+
+GET     /                             controllers.ApiController.getAccessToken
