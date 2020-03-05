@@ -18,6 +18,12 @@ object GithubComponent {
   implicit val IOContextShift = IO.contextShift(global)
   val accessToken = sys.env.get("GH_TOKEN")
 
+  /**
+    * gets a list of users contributions modified by organization name
+    *
+    * @param orgName organization name
+    * @return list of users contributions
+    */
   def getMembersAndCommits(orgName: String): List[ContributionsDTO] = {
     val listOrgRepos = Github[IO](accessToken).repos.listOrgRepos(orgName)
 
@@ -44,6 +50,13 @@ object GithubComponent {
 
   }
 
+  /**
+    * returns a list of users contributions by repo and org name
+    *
+    * @param orgName    organization name
+    * @param repoName   repository name
+    * @return           list of users
+    */
   def getContributorsFromRepository(orgName: String, repoName: String) = {
     Github[IO](accessToken).repos.listContributors(orgName, repoName, Some("false")).unsafeRunSync match {
       case Left(e) => {
@@ -55,6 +68,11 @@ object GithubComponent {
     }
   }
 
+  /**
+    * generate new authentication to api and puts it into GH_TOKEN variable
+    *
+    * @param configuration  play configuration
+    */
   def getAccessToken(configuration: Configuration) = {
     val newAuth = Github[IO](None).auth.newAuth(
       configuration.underlying.getString("github.username"),

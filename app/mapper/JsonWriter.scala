@@ -6,6 +6,8 @@ import play.api.libs.json.{Json, Writes}
 
 /**
   * Created by Dominik Zduńczyk on 04.02.2020.
+  *
+  * Json objects mapper
   */
 object JsonWriter {
 
