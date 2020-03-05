@@ -17,11 +17,20 @@ class ApiController @Inject()(cc: ControllerComponents) extends AbstractControll
 
   def getNumberCommitsByUsersOfRepo(orgName: String) = Action { implicit request =>
 
-    Ok(JsonWriter.responseWrites.writes(ResponseDTO[List[ContributionsDTO]] (
-      Some("200"),
-      Some(GithubComponent.getMembersAndCommits(orgName: String)),
-      Some("Ok")))
-    )
+    val membersAndContributions = GithubComponent.getMembersAndCommits(orgName: String)
+
+    if(membersAndContributions._1.nonEmpty)
+      Ok(JsonWriter.responseWrites.writes(ResponseDTO[List[ContributionsDTO]] (
+        Some("200"),
+        Some(membersAndContributions._1),
+        Some(membersAndContributions._2)))
+      )
+     else
+      BadRequest(JsonWriter.responseWrites.writes(ResponseDTO[List[ContributionsDTO]] (
+        Some("400"),
+        Some(membersAndContributions._1),
+        Some(membersAndContributions._2)))
+      )
 
   }
 

@@ -2,6 +2,7 @@ package component
 
 import github4s.Github
 import cats.effect.IO
+import github4s.domain.User
 import model.ContributionsDTO
 import play.api.Configuration
 import utils.UtilsFunctions
@@ -24,13 +25,13 @@ object GithubComponent {
     * @param orgName organization name
     * @return list of users contributions
     */
-  def getMembersAndCommits(orgName: String): List[ContributionsDTO] = {
+  def getMembersAndCommits(orgName: String): (List[ContributionsDTO], String) = {
     val listOrgRepos = Github[IO](accessToken).repos.listOrgRepos(orgName)
 
-    val results = listOrgRepos.unsafeRunSync match {
+    val results: List[(List[User], String)] = listOrgRepos.unsafeRunSync match {
       case Left(e) => {
         println(e.getMessage)
-        List()
+        List((List(), e.getMessage))
       }
 
       case Right(r) => {
@@ -40,13 +41,15 @@ object GithubComponent {
       }
     }
 
-    results.flatMap { result =>
-      result.map { user =>
+    val contributions = results.flatMap { result =>
+      result._1.map { user =>
         (user.login, user.contributions)
       }
     }.groupBy(_._1).mapValues(_.map(_._2)).map { data =>
       ContributionsDTO(data._1, UtilsFunctions.sumList(data._2))
     }.toList.sortWith(_.contributions.getOrElse(0) > _.contributions.getOrElse(0))
+
+    (contributions, results.map(_._2).toSet.mkString("\n").replaceAll("[\n\"\"]", ""))
 
   }
 
@@ -57,14 +60,14 @@ object GithubComponent {
     * @param repoName   repository name
     * @return           list of users
     */
-  def getContributorsFromRepository(orgName: String, repoName: String) = {
+  def getContributorsFromRepository(orgName: String, repoName: String): (List[User], String) = {
     Github[IO](accessToken).repos.listContributors(orgName, repoName, Some("false")).unsafeRunSync match {
       case Left(e) => {
         println(e.getMessage)
-        List()
+        (List(), e.getMessage)
       }
 
-      case Right(right) => right.result
+      case Right(right) => (right.result, "Ok")
     }
   }
 
