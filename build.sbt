@@ -16,6 +16,10 @@ libraryDependencies ++= Seq( jdbc , ehcache , ws , specs2 % Test , guice )
 
 libraryDependencies += "com.47deg" %% "github4s" % "0.22.0"
 
+libraryDependencies ++= Seq(
+  "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0" % "test"
+)
+
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )
 
 
