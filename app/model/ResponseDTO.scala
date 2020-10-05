@@ -5,4 +5,4 @@ package model
   *
   * Response DTO case class
   */
-case class ResponseDTO[A](code : Option[Int], result : Option[A], message : Option[String])
+case class ResponseDTO[A](code : Int, result : Option[A], message : String)

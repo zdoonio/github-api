@@ -1,7 +1,7 @@
 package utils
 
 /**
-  * Created by ${USER_dabrowski} on 04.03.2020.
+  * Created by Dominik Zduńczyk on 04.03.2020.
   */
 object UtilsFunctions {
 

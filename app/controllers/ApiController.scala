@@ -3,7 +3,6 @@ package controllers
 import component.GithubComponent
 import javax.inject._
 import model.{ContributionsDTO, ResponseDTO}
-import play.api.libs.json.Json
 import play.api.mvc._
 import mapper.JsonWriter
 
@@ -21,15 +20,15 @@ class ApiController @Inject()(cc: ControllerComponents) extends AbstractControll
 
     if(membersAndContributions._1.nonEmpty)
       Ok(JsonWriter.responseWrites.writes(ResponseDTO[List[ContributionsDTO]] (
-        Some(200),
+        200,
         Some(membersAndContributions._1),
-        Some(membersAndContributions._2)))
+        membersAndContributions._2))
       )
      else
-      BadRequest(JsonWriter.responseWrites.writes(ResponseDTO[List[ContributionsDTO]] (
-        Some(400),
+      NotFound(JsonWriter.responseWrites.writes(ResponseDTO[List[ContributionsDTO]] (
+        404,
         Some(membersAndContributions._1),
-        Some(membersAndContributions._2)))
+        membersAndContributions._2))
       )
 
   }
