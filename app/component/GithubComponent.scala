@@ -4,13 +4,13 @@ import github4s.Github
 import cats.effect.IO
 import github4s.GithubResponses.GHResponse
 import github4s.domain.{Repository, User}
+import io.chrisdavenport.vault.{Key, Locker, Vault}
 import model.ContributionsDTO
 import play.api.Configuration
 import utils.UtilsFunctions
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.sys.process.Process
 import scala.concurrent.duration._
 import play.api.Logging
 
@@ -20,7 +20,7 @@ import play.api.Logging
 object GithubComponent extends Logging {
 
   implicit val IOContextShift = IO.contextShift(global)
-  val accessToken = sys.env.get("GH_TOKEN")
+  var githubTokenVault: IO[Option[String]] = IO(Some(""))
 
   /**
     * gets a list of users contributions modified by organization name
@@ -30,13 +30,21 @@ object GithubComponent extends Logging {
     */
   def getMembersAndCommits(orgName: String): Future[(List[ContributionsDTO], String)] = {
 
-    val listOrgRepos = Github[IO](accessToken).repos.listOrgRepos(orgName)
+    val listOrgRepos = Github[IO](githubTokenVault.unsafeRunSync()).repos.listOrgRepos(orgName)
+    println(githubTokenVault.unsafeRunSync())
     val repos: Future[GHResponse[List[Repository]]] = listOrgRepos.unsafeToFuture
 
     repos map { value =>
 
-      val results = value.right.get.result.map { repo =>
-        Await.result(getContributorsFromRepository(orgName, repo.name), Duration.Inf)
+      val results = value match {
+        case Left(exception) =>
+          logger.warn(s"Something went wrong ${exception.getMessage}")
+          List()
+
+        case Right(right) =>
+          right.result.map { repo =>
+            Await.result(getContributorsFromRepository(orgName, repo.name), Duration.Inf)
+          }
       }
 
       val contributions = results.flatMap { result =>
@@ -61,7 +69,7 @@ object GithubComponent extends Logging {
     * @return list of users
     */
   def getContributorsFromRepository(orgName: String, repoName: String): Future[List[User]] = {
-    val contributors = Github[IO](accessToken).repos.listContributors(orgName, repoName, Some("false")).unsafeToFuture()
+    val contributors = Github[IO](githubTokenVault.unsafeRunSync).repos.listContributors(orgName, repoName, Some("false")).unsafeToFuture()
 
     contributors map {
       case Left(exception) =>
@@ -90,11 +98,14 @@ object GithubComponent extends Logging {
       case Left(e) =>
         logger.warn(s"Something went wrong: ${e.getMessage}")
 
-      case Right(r) => {
-        Process("env",
-          None,
-          "GH_TOKEN" -> r.result.token)
-      }
+      case Right(r) =>
+        githubTokenVault = for {
+          key <- Key.newKey[IO, String]
+        } yield {
+          Vault.empty
+            .insert(key, r.result.token)
+            .lookup(key)
+        }
     }
 
   }

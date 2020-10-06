@@ -20,6 +20,8 @@ libraryDependencies ++= Seq(
   "org.scalatestplus.play" %% "scalatestplus-play" % "5.0.0" % "test"
 )
 
+libraryDependencies += "io.chrisdavenport" %% "vault" % "2.0.0"
+
 unmanagedResourceDirectories in Test <+=  baseDirectory ( _ /"target/web/public/test" )
 
 
