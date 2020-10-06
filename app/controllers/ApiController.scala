@@ -30,7 +30,7 @@ class ApiController @Inject()(cc: ControllerComponents) extends AbstractControll
         NotFound(JsonWriter.responseWrites.writes(ResponseDTO[List[ContributionsDTO]] (
           404,
           Some(membersAndContributions._1),
-          membersAndContributions._2))
+          "Not found"))
         )
 
     } (ExecutionContext.global)
