@@ -12,11 +12,12 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.sys.process.Process
 import scala.concurrent.duration._
+import play.api.Logging
 
 /**
   * Created by Dominik Zduńczyk on 03.03.2020.
   */
-object GithubComponent {
+object GithubComponent extends Logging {
 
   implicit val IOContextShift = IO.contextShift(global)
   val accessToken = sys.env.get("GH_TOKEN")
@@ -82,7 +83,7 @@ object GithubComponent {
       configuration.underlying.getString("github.client.secret"))
     newAuth.unsafeRunSync match {
       case Left(e) =>
-        println(s"Something went wrong: ${e.getMessage}")
+        logger.warn(s"Something went wrong: ${e.getMessage}")
 
       case Right(r) => {
         Process("env",
