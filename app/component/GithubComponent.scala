@@ -40,14 +40,14 @@ object GithubComponent extends Logging {
       }
 
       val contributions = results.flatMap { result =>
-        result._1.map { user =>
+        result.map { user =>
           (user.login, user.contributions)
         }
       }.groupBy(_._1).mapValues(_.map(_._2)).map { data =>
         ContributionsDTO(data._1, UtilsFunctions.sumList(data._2))
       }.toList.sortWith(_.contributions.getOrElse(0) > _.contributions.getOrElse(0))
 
-      (contributions, results.map(_._2).toSet.mkString("\n").replaceAll("[\n\"\"]", ""))
+      (contributions, "Ok")
 
     }
 
@@ -60,11 +60,16 @@ object GithubComponent extends Logging {
     * @param repoName repository name
     * @return list of users
     */
-  def getContributorsFromRepository(orgName: String, repoName: String): Future[(List[User], String)] = {
+  def getContributorsFromRepository(orgName: String, repoName: String): Future[List[User]] = {
     val contributors = Github[IO](accessToken).repos.listContributors(orgName, repoName, Some("false")).unsafeToFuture()
 
-    contributors map { value =>
-      (value.right.get.result, "Ok")
+    contributors map {
+      case Left(exception) =>
+        logger.warn(exception.getMessage)
+        List()
+
+      case Right(right) =>
+        right.result
     }
   }
 
